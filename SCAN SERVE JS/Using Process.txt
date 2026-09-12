@@ -1,0 +1,352 @@
+Absolutely. Since the setup is working now, the best approach is to **save the whole setup as a small Docker project** so that next time you only need to connect the scanner to the network and run one command.
+
+## 1. Keep this folder
+
+Your project is:
+
+```text
+C:\scanservjs
+```
+
+I recommend keeping this structure:
+
+```text
+C:\scanservjs
+│
+├── docker-compose.yml
+│
+└── data
+    ├── preview
+    └── scans
+```
+
+The important file is `docker-compose.yml`.
+
+---
+
+## 2. Save your working `docker-compose.yml`
+
+Open:
+
+```text
+C:\scanservjs\docker-compose.yml
+```
+
+Save this:
+
+```yaml
+services:
+  scanservjs:
+    image: sbs20/scanservjs:latest
+    container_name: scanservjs
+    restart: unless-stopped
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      TZ: Asia/Kabul
+      SANE_AIRSCAN_DEVICE: "escl:HP M281fdw:http://10.10.27.63/eSCL"
+
+    volumes:
+      - ./data:/var/lib/scanservjs/output
+```
+
+**This file is the important part of your setup.**
+
+It remembers:
+
+* Scanservjs Docker image
+* Container name
+* Port `8080`
+* Your HP scanner
+* Scanner IP
+* eSCL protocol
+* Time zone
+* Scan output directory
+
+---
+
+# 3. Your scanner IP is important
+
+Currently your scanner is:
+
+```text
+10.10.27.63
+```
+
+Your configuration contains:
+
+```text
+http://10.10.27.63/eSCL
+```
+
+If the HP printer/scanner gets a **different IP address from DHCP**, scanning will stop working.
+
+I strongly recommend giving the HP M281fdw a **static IP or DHCP reservation**.
+
+For example, keep:
+
+```text
+10.10.27.63
+```
+
+permanently assigned to the printer.
+
+---
+
+# 4. Next time you want to start everything
+
+First make sure:
+
+* HP M281fdw is powered on
+* Scanner is connected to Wi-Fi
+* PC is connected to the same network
+* Docker Desktop is running
+
+Then open CMD:
+
+```cmd
+cd C:\scanservjs
+```
+
+Run:
+
+```cmd
+docker compose up -d
+```
+
+That's it.
+
+Then open:
+
+```text
+http://localhost:8080
+```
+
+Your scanservjs interface should appear.
+
+---
+
+# 5. Check that everything is running
+
+Run:
+
+```cmd
+docker ps
+```
+
+You should see something similar to:
+
+```text
+scanservjs    sbs20/scanservjs:latest    Up
+```
+
+You can also test the scanner:
+
+```cmd
+docker exec -it scanservjs sh -c "scanimage -L"
+```
+
+You should see:
+
+```text
+device `airscan:e0:HP M281fdw' is a eSCL HP M281fdw ip=10.10.27.63
+```
+
+---
+
+# 6. If the container isn't running
+
+Run:
+
+```cmd
+docker compose up -d
+```
+
+If you want to completely recreate it:
+
+```cmd
+docker compose down
+docker compose up -d
+```
+
+Then:
+
+```cmd
+docker ps
+```
+
+---
+
+# 7. If something stops working
+
+### Check Docker logs
+
+```cmd
+docker logs scanservjs --tail 100
+```
+
+### Check scanner network
+
+```cmd
+ping 10.10.27.63
+```
+
+You should get:
+
+```text
+Reply from 10.10.27.63
+```
+
+### Check scanner's eSCL interface
+
+```cmd
+curl http://10.10.27.63/eSCL/ScannerCapabilities
+```
+
+You should receive XML containing:
+
+```text
+HP Color LaserJet MFP M281fdw
+```
+
+### Check SANE
+
+```cmd
+docker exec -it scanservjs scanimage -L
+```
+
+---
+
+# 8. Stop scanservjs
+
+When you want to stop it:
+
+```cmd
+cd C:\scanservjs
+docker compose down
+```
+
+Your configuration and scan files remain in:
+
+```text
+C:\scanservjs\data
+```
+
+---
+
+# 9. Start it again
+
+Later:
+
+```cmd
+cd C:\scanservjs
+docker compose up -d
+```
+
+Then:
+
+```text
+http://localhost:8080
+```
+
+---
+
+# 10. I recommend making a `START.bat`
+
+This makes your life much easier.
+
+Create:
+
+```text
+C:\scanservjs\START.bat
+```
+
+Put:
+
+```bat
+@echo off
+cd /d C:\scanservjs
+
+echo Starting Scanservjs...
+docker compose up -d
+
+echo.
+echo Scanservjs is starting...
+echo.
+echo Open: http://localhost:8080
+echo.
+
+pause
+```
+
+Then next time you can simply **double-click `START.bat`**.
+
+---
+
+# 11. Also create `STOP.bat`
+
+Create:
+
+```text
+C:\scanservjs\STOP.bat
+```
+
+Put:
+
+```bat
+@echo off
+cd /d C:\scanservjs
+
+echo Stopping Scanservjs...
+docker compose down
+
+echo.
+echo Scanservjs stopped.
+echo.
+
+pause
+```
+
+Now you have:
+
+```text
+C:\scanservjs
+│
+├── docker-compose.yml
+├── START.bat
+├── STOP.bat
+│
+└── data
+    ├── preview
+    └── scans
+```
+
+## Your entire future workflow
+
+**Start:**
+
+```text
+Docker Desktop
+      ↓
+START.bat
+      ↓
+Scanservjs
+      ↓
+http://localhost:8080
+      ↓
+HP M281fdw
+```
+
+**Stop:**
+
+```text
+STOP.bat
+```
+
+### One final recommendation
+
+Because we've done quite a few troubleshooting steps during setup, **don't delete the working container/image yet**. Keep the current working installation until you've confirmed that `docker compose down` → `docker compose up -d` reliably restores the scanner.
+
+Once you've tested that successfully, your setup is essentially reproducible.

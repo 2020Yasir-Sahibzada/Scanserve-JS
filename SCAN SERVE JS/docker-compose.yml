@@ -1,0 +1,15 @@
+services:
+  scanservjs:
+    image: sbs20/scanservjs:latest
+    container_name: scanservjs
+    restart: unless-stopped
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      TZ: Asia/Kabul
+      SANE_AIRSCAN_DEVICE: "escl:HP M281fdw:http://10.10.22.198/eSCL"
+
+    volumes:
+      - ./data:/var/lib/scanservjs/output
