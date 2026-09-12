@@ -12,10 +12,7 @@ Open `/scan`, click **Scan Single Page** or **Scan ADF**, preview, then **Save D
 - [Quick Start](#quick-start)
 - [SCAN SERVE JS Folder](#scan-serve-js-folder)
 - [Laravel Configuration](#laravel-configuration)
-- [Production Deployment](#production-deployment)
 - [Troubleshooting](#troubleshooting)
-- [Security Checklist](#security-checklist)
-- [License](#license)
 
 ***
 
@@ -209,76 +206,6 @@ storage/app/public/
 
 ***
 
-## Production Deployment
-
-### Nginx
-
-```nginx
-server {
-    listen 443 ssl http2;
-    server_name scanner.example.com;
-    root /var/www/scanner/public;
-
-    ssl_certificate     /etc/letsencrypt/live/scanner.example.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/scanner.example.com/privkey.pem;
-
-    add_header X-Content-Type-Options nosniff;
-    add_header X-Frame-Options DENY;
-    client_max_body_size 100M;
-
-    location / { try_files $uri $uri/ /index.php?$query_string; }
-    location ~ \.php$ {
-        fastcgi_pass unix:/run/php/php8.3-fpm.sock;
-        include fastcgi_params;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        fastcgi_read_timeout 600;
-    }
-    location ~ /\.(?!well-known).* { deny all; }
-}
-```
-
-### systemd
-
-`/etc/systemd/system/scanner.service`:
-
-```ini
-[Unit]
-Description=Laravel Document Scanner
-After=network.target docker.service
-Requires=docker.service
-
-[Service]
-User=www-data
-WorkingDirectory=/var/www/scanner
-ExecStart=/usr/bin/php artisan queue:work --sleep=3 --tries=1
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-```bash
-sudo systemctl enable --now scanner
-```
-
-### On every deploy
-
-```bash
-composer install --no-dev --optimize-autoloader
-npm ci && npm run build
-php artisan migrate --force
-php artisan config:cache route:cache view:cache event:cache
-php artisan storage:link
-sudo systemctl restart scanner
-cd "SCAN SERVE JS" && docker compose pull && docker compose up -d
-```
-
-### Backups
-
-Back up: **DB**, `storage/app/public/documents/`, `.env`, and the `SCAN SERVE JS/data/` volume.
-
-***
-
 ## Troubleshooting
 
 | Symptom                             | Cause                               | Fix                                                                |
@@ -293,13 +220,5 @@ Back up: **DB**, `storage/app/public/documents/`, `.env`, and the `SCAN SERVE JS
 
 ***
 
-## Security Checklist
-
-- [ ] `APP_ENV=production`, `APP_DEBUG=false`
-- [ ] `APP_KEY` set, `.env` in `.gitignore`
-- [ ] HTTPS via Let's Encrypt; HSTS on
-- [ ] ScanServJS port `8080` bound to `127.0.0.1` or firewalled
-- [ ] DB credentials from a secret manager
-- [ ] `storage/` and `bootstrap/cache/` owned by the web user
-- [ ] Automated, tested backups
+<br />
 
