@@ -1,6 +1,6 @@
 # Document Scanner (Laravel + ScanServJS)
 
-A self-hosted document scanning web app that turns any network AirScan/eSCL MFP into a one-click browser scanning station. Built with **Laravel 13** + **[ScanServJS](https://github.com/sbs20/scanervjs)** (Docker).
+A self-hosted document scanning web app that turns any network AirScan/eSCL MFP into a one-click browser scanning station. Built with **Laravel 13** + **[ScanServJS](https://github.com/sbs20/scanservjs)** (Docker).
 
 Open `/scan`, click **Scan Single Page** or **Scan ADF**, preview, then **Save Document** (JPG or multi-page PDF) to Laravel storage and the `scanned_documents` table.
 
@@ -60,7 +60,7 @@ Open `http://127.0.0.1:8000/scan`, scan, save.
 
 ## SCAN SERVE JS Folder
 
-Standalone Docker project that runs the [sbs20/scanservjs](https://github.com/sbs20/scanervjs) image, decoupled from the Laravel app so it can run on a different host if needed.
+Standalone Docker project that runs the [scanservjs](https://github.com/sbs20/scanservjs) image, decoupled from the Laravel app so it can run on a different host if needed.
 
 ### Key files
 
@@ -165,8 +165,6 @@ FILESYSTEM_DISK=public
 SCANSERVJS_URL=http://127.0.0.1:8080
 SCANSERVJS_TIMEOUT=600
 ```
-
-SQLite is used by default for local dev.
 
 ### Key environment variables
 
